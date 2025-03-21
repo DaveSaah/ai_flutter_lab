@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:animate_do/animate_do.dart'; // Import animate_do
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,10 @@ class MyApp extends StatelessWidget {
       title: 'AI News Summarizer',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          elevation: 2,
+        ),
       ),
       home: HomeScreen(),
     );
@@ -62,10 +67,8 @@ class HomeScreenState extends State<HomeScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to load news.',
-              ),
+            const SnackBar(
+              content: Text('Failed to load news.'),
             ),
           );
         }
@@ -77,10 +80,8 @@ class HomeScreenState extends State<HomeScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'An error occurred.',
-            ),
+          const SnackBar(
+            content: Text('An error occurred.'),
           ),
         );
       }
@@ -116,55 +117,73 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'AI News Summarizer',
-        ),
+        title: const Text('AI News Summarizer'),
       ),
       body: _isLoading
-          ? Center(
+          ? const Center(
               child: CircularProgressIndicator(),
             )
           : ListView.builder(
               itemCount: _newsArticles.length,
               itemBuilder: (context, index) {
                 final article = _newsArticles[index];
-                return FutureBuilder<String>(
-                  future: _summarizeArticle(article['description'] ??
-                      article['content'] ??
-                      'No Description Available'),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return ListTile(
-                        title: Text(article['title'] ?? 'No Title'),
-                        subtitle: Text('Summarizing...'),
-                      );
-                    } else if (snapshot.hasError) {
-                      return ListTile(
-                        title: Text(article['title'] ?? 'No Title'),
-                        subtitle: Text('Summary failed.'),
-                      );
-                    } else {
-                      return ListTile(
-                        title: Text(article['title'] ?? 'No Title'),
-                        subtitle:
-                            Text(snapshot.data ?? 'Summary not available.'),
-                        onTap: () async {
-                          if (article['url'] != null) {
-                            final Uri url = Uri.parse(article['url']);
-                            if (!await launchUrl(url)) {
-                              throw Exception('Could not launch $url');
-                            }
+                return FadeInUp( // Apply FadeInUp animation
+                  delay: Duration(milliseconds: 100 * index), // Stagger animations
+                  child: Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: InkWell(
+                      onTap: () async {
+                        if (article['url'] != null) {
+                          final Uri url = Uri.parse(article['url']);
+                          if (!await launchUrl(url)) {
+                            throw Exception('Could not launch $url');
                           }
-                        },
-                      );
-                    }
-                  },
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              article['title'] ?? 'No Title',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            FutureBuilder<String>(
+                              future: _summarizeArticle(article['description'] ??
+                                  article['content'] ??
+                                  'No Description Available'),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Text('Summarizing...');
+                                } else if (snapshot.hasError) {
+                                  return const Text('Summary failed.');
+                                } else {
+                                  return Text(snapshot.data ??
+                                      'Summary not available.');
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _fetchNews,
-        child: Icon(Icons.refresh),
+        child: const Icon(Icons.refresh),
       ),
     );
   }
