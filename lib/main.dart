@@ -46,7 +46,7 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       final newsApiKey = dotenv.env['NEWS_API_KEY'];
       final response = await http.get(Uri.parse(
-        'https://newsapi.org/v2/top-headlines?country=us&apiKey=$newsApiKey',
+        'https://newsapi.org/v2/top-headlines?country=us&pageSize=6&apiKey=$newsApiKey',
       ));
 
       if (response.statusCode == 200) {
